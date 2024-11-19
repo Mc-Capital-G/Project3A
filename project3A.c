@@ -1,3 +1,15 @@
+/*
+Group: Declan McGrellis, Megan Leverock, Jake Genovese
+Date: November 19th, 2024
+Course: ELEC-3371
+Description: This program demonstrates the ability to detect JoyStick inputs on
+             the rising edge, and read an analog input from the potentiometer 
+             linked to PC0. The value read from PC0 will be converted into a
+             value ranging from 1-100. The board will communicate through USART
+             when each direction is pressed on the JoyStick, and GPIOE pins will light
+             up according to the direction pressed.
+
+*/
 #include <stdbool.h>
 
 void InitializeGPIO();
@@ -47,18 +59,14 @@ void main() {
               WriteMessage("LEFT Pressed",  12);
              break;
          case 05:
-              //WriteMessage("CLICK Pressed",  13);
-               while (! (USART1_SR & (1<<7)) == 0x80) {}
-               USART1_DR = C0Data;
-               while(USART1_SR.TC == 0){}
+              WriteMessage("CLICK Pressed",  13);
              break;
          default:
              break;
          }
-         C0Data = ADCData();
+         C0Data = (ADCData() * 99/512) + 1;
 
          GPIOD_ODR = C0Data << 8;
-
      }
 
 }
@@ -96,12 +104,6 @@ void InitGPIO() {
       RCC_APB2ENR |= 1 << 4;     //c
       RCC_APB2ENR |= 1 << 6;   //e
       RCC_APB2ENR |= 1 << 9 ;
-      GPIOC_CRL &= ~(0xF << 0); // Configure PC0 as an Analog Input
-      ADC1_SQR1 = (0b0000 << 20); // 1 conversion
-      ADC1_SQR3 = 10; // Select Channel 10 as only one in conversion sequence
-      ADC1_SMPR1 = 0b100; // Set sample time on channel 10
-      ADC1_CR2 |= (0b111 << 17); // Set software start as external event forregular group conversion
-      ADC1_CR2.ADON = 1;
       GPIOA_CRL = 0x44444444;
       GPIOD_CRL = 0X44444444;
       GPIOB_CRL = 0X44444444;
@@ -109,6 +111,14 @@ void InitGPIO() {
       GPIOC_CRL = 0x33333333;
       GPIOE_CRH = 0x33333333;
       GPIOD_CRH = 0x33333333;
+      GPIOC_CRL &= ~(0xF << 0); // Configure PC0 as an Analog Input
+      ADC1_SQR1 = (0b0000 << 20); // 1 conversion
+      ADC1_SQR3 = 10; // Select Channel 10 as only one in conversion sequence
+      ADC1_SMPR1 = 0b100; // Set sample time on channel 10
+      ADC1_CR2 |= (0b111 << 17); // Set software start as external event forregular group conversion
+      ADC1_CR2.ADON = 1;
+
+      delay_ms(10);
 }
 
 void WriteMessage(char message[], int length) {
