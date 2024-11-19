@@ -15,7 +15,7 @@ unsigned int C0Data;
 void main() {
      InitGPIO();
      InitializeUSART1();
-     
+
      for(;;) {
 
          if(((USART1_SR & (1<<5))== 0x20)){
@@ -47,14 +47,18 @@ void main() {
               WriteMessage("LEFT Pressed",  12);
              break;
          case 05:
-              WriteMessage("CLICK Pressed",  13);
+              //WriteMessage("CLICK Pressed",  13);
+               while (! (USART1_SR & (1<<7)) == 0x80) {}
+               USART1_DR = C0Data;
+               while(USART1_SR.TC == 0){}
              break;
          default:
              break;
          }
-         
-         GPIOD_ODR = ADCData() << 8;
-         
+         C0Data = ADCData();
+
+         GPIOD_ODR = C0Data << 8;
+
      }
 
 }
